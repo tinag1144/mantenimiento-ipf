@@ -15,10 +15,8 @@ import {
 } from 'expo-camera';
 
 import {
-  consultarNotificaciones,
   consultarUbicacion,
   RecursoPermiso,
-  solicitarNotificaciones,
   solicitarUbicacion,
 } from '@/lib/permisos';
 
@@ -116,27 +114,22 @@ export function usePermiso(
           return;
         }
 
-        const permiso =
-          await consultarNotificaciones();
-
-        procesar(
-          permiso.granted,
-          permiso.status,
-          permiso.canAskAgain
-        );
+        // Notificaciones:
+        // las completaremos al hacer la development build.
+        setEstado('preguntable');
       } catch (error) {
         console.error(
           `Error consultando permiso de ${recurso}:`,
           error
         );
+
+        setEstado('bloqueado');
       }
-    },
-    [
+    }, [
       recurso,
       consultarCamara,
       procesar,
-    ]
-  );
+    ]);
 
   const pedir =
     useCallback(async () => {
@@ -169,16 +162,11 @@ export function usePermiso(
           return permiso.granted;
         }
 
-        const permiso =
-          await solicitarNotificaciones();
-
-        procesar(
-          permiso.granted,
-          permiso.status,
-          permiso.canAskAgain
+        console.warn(
+          'Las notificaciones se probarán en la development build.'
         );
 
-        return permiso.granted;
+        return false;
       } catch (error) {
         console.error(
           `Error solicitando permiso de ${recurso}:`,
@@ -187,13 +175,11 @@ export function usePermiso(
 
         return false;
       }
-    },
-    [
+    }, [
       recurso,
       pedirCamara,
       procesar,
-    ]
-  );
+    ]);
 
   const abrirAjustes =
     useCallback(async () => {

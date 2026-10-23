@@ -1,5 +1,4 @@
 import * as Location from 'expo-location';
-import * as Notifications from 'expo-notifications';
 
 import { Platform } from 'react-native';
 
@@ -49,19 +48,6 @@ export function normalizarUbicacion(
   };
 }
 
-export function normalizarNotificaciones(
-  permiso: Notifications.NotificationPermissionsStatus
-): RespuestaPermiso {
-  return {
-    status: permiso.status,
-    granted: permiso.granted,
-    canAskAgain: permiso.canAskAgain,
-
-    parcial: false,
-    detalleParcial: null,
-  };
-}
-
 export async function consultarUbicacion() {
   const permiso =
     await Location.getForegroundPermissionsAsync();
@@ -74,35 +60,4 @@ export async function solicitarUbicacion() {
     await Location.requestForegroundPermissionsAsync();
 
   return normalizarUbicacion(permiso);
-}
-
-async function prepararCanalNotificaciones() {
-  if (Platform.OS !== 'android') {
-    return;
-  }
-
-  await Notifications.setNotificationChannelAsync(
-    'reportes',
-    {
-      name: 'Reportes',
-      importance:
-        Notifications.AndroidImportance.DEFAULT,
-    }
-  );
-}
-
-export async function consultarNotificaciones() {
-  const permiso =
-    await Notifications.getPermissionsAsync();
-
-  return normalizarNotificaciones(permiso);
-}
-
-export async function solicitarNotificaciones() {
-  await prepararCanalNotificaciones();
-
-  const permiso =
-    await Notifications.requestPermissionsAsync();
-
-  return normalizarNotificaciones(permiso);
 }
