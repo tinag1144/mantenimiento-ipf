@@ -1,6 +1,9 @@
 import * as Location from 'expo-location';
+import * as Notifications from 'expo-notifications';
 
-import { Platform } from 'react-native';
+import {
+  Platform,
+} from 'react-native';
 
 export type RecursoPermiso =
   | 'camara'
@@ -27,7 +30,8 @@ export function normalizarUbicacion(
     permiso.android?.accuracy === 'coarse'
   ) {
     parcial = true;
-    detalleParcial = 'Ubicación aproximada';
+    detalleParcial =
+      'Ubicación aproximada';
   }
 
   if (
@@ -35,13 +39,15 @@ export function normalizarUbicacion(
     permiso.ios?.accuracy === 'reduced'
   ) {
     parcial = true;
-    detalleParcial = 'Ubicación aproximada';
+    detalleParcial =
+      'Ubicación aproximada';
   }
 
   return {
     status: permiso.status,
     granted: permiso.granted,
-    canAskAgain: permiso.canAskAgain,
+    canAskAgain:
+      permiso.canAskAgain,
 
     parcial,
     detalleParcial,
@@ -52,12 +58,65 @@ export async function consultarUbicacion() {
   const permiso =
     await Location.getForegroundPermissionsAsync();
 
-  return normalizarUbicacion(permiso);
+  return normalizarUbicacion(
+    permiso
+  );
 }
 
 export async function solicitarUbicacion() {
   const permiso =
     await Location.requestForegroundPermissionsAsync();
 
-  return normalizarUbicacion(permiso);
+  return normalizarUbicacion(
+    permiso
+  );
+}
+
+export async function prepararCanalReportes() {
+  if (Platform.OS !== 'android') {
+    return;
+  }
+
+  await Notifications.setNotificationChannelAsync(
+    'reportes',
+    {
+      name: 'Reportes',
+      importance:
+        Notifications.AndroidImportance.MAX,
+    }
+  );
+}
+
+export async function consultarNotificaciones(): Promise<RespuestaPermiso> {
+  const permiso =
+    await Notifications.getPermissionsAsync();
+
+  return {
+    status: permiso.status,
+    granted: permiso.granted,
+    canAskAgain:
+      permiso.canAskAgain,
+
+    parcial: false,
+    detalleParcial: null,
+  };
+}
+
+export async function solicitarNotificaciones(): Promise<RespuestaPermiso> {
+  // En Android creamos el canal ANTES
+  // de mostrar el permiso del sistema.
+  await prepararCanalReportes();
+
+  const permiso =
+    await Notifications.requestPermissionsAsync();
+
+  return {
+    status: permiso.status,
+    granted: permiso.granted,
+    canAskAgain:
+      permiso.canAskAgain,
+
+    parcial: false,
+    detalleParcial: null,
+  };
 }

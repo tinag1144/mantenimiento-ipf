@@ -15,8 +15,10 @@ import {
 } from 'expo-camera';
 
 import {
+  consultarNotificaciones,
   consultarUbicacion,
   RecursoPermiso,
+  solicitarNotificaciones,
   solicitarUbicacion,
 } from '@/lib/permisos';
 
@@ -35,156 +37,235 @@ export function usePermiso(
     consultarCamara,
   ] = useCameraPermissions();
 
-  const [estado, setEstado] =
-    useState<EstadoPermiso>('cargando');
+  const [
+    estado,
+    setEstado,
+  ] =
+    useState<EstadoPermiso>(
+      'cargando'
+    );
 
-  const [parcial, setParcial] =
-    useState(false);
+  const [
+    parcial,
+    setParcial,
+  ] = useState(false);
 
   const [
     detalleParcial,
     setDetalleParcial,
-  ] = useState<string | null>(null);
-
-  const estadoAnterior = useRef(
-    AppState.currentState
+  ] = useState<string | null>(
+    null
   );
 
-  const procesar = useCallback(
-    (
-      granted: boolean,
-      status: string,
-      canAskAgain: boolean,
-      esParcial = false,
-      detalle: string | null = null
-    ) => {
-      setParcial(esParcial);
-      setDetalleParcial(detalle);
+  const estadoAnterior =
+    useRef(
+      AppState.currentState
+    );
 
-      if (granted) {
-        setEstado('concedido');
-        return;
-      }
+  const procesar =
+    useCallback(
+      (
+        granted: boolean,
+        status: string,
+        canAskAgain: boolean,
+        esParcial = false,
+        detalle:
+          | string
+          | null = null
+      ) => {
+        setParcial(
+          esParcial
+        );
 
-      if (status === 'undetermined') {
-        setEstado('preguntable');
-        return;
-      }
+        setDetalleParcial(
+          detalle
+        );
 
-      if (canAskAgain) {
-        setEstado('preguntable');
-        return;
-      }
+        if (granted) {
+          setEstado(
+            'concedido'
+          );
 
-      setEstado('bloqueado');
-    },
-    []
-  );
+          return;
+        }
+
+        if (
+          status ===
+          'undetermined'
+        ) {
+          setEstado(
+            'preguntable'
+          );
+
+          return;
+        }
+
+        if (canAskAgain) {
+          setEstado(
+            'preguntable'
+          );
+
+          return;
+        }
+
+        setEstado(
+          'bloqueado'
+        );
+      },
+      []
+    );
 
   const actualizar =
-    useCallback(async () => {
-      try {
-        setEstado('cargando');
-
-        if (recurso === 'camara') {
-          const permiso =
-            await consultarCamara();
-
-          procesar(
-            permiso.granted,
-            permiso.status,
-            permiso.canAskAgain
+    useCallback(
+      async () => {
+        try {
+          setEstado(
+            'cargando'
           );
 
-          return;
-        }
+          if (
+            recurso ===
+            'camara'
+          ) {
+            const permiso =
+              await consultarCamara();
 
-        if (recurso === 'ubicacion') {
-          const permiso =
-            await consultarUbicacion();
+            procesar(
+              permiso.granted,
+              permiso.status,
+              permiso.canAskAgain
+            );
 
-          procesar(
-            permiso.granted,
-            permiso.status,
-            permiso.canAskAgain,
-            permiso.parcial,
-            permiso.detalleParcial
+            return;
+          }
+
+          if (
+            recurso ===
+            'ubicacion'
+          ) {
+            const permiso =
+              await consultarUbicacion();
+
+            procesar(
+              permiso.granted,
+              permiso.status,
+              permiso.canAskAgain,
+              permiso.parcial,
+              permiso.detalleParcial
+            );
+
+            return;
+          }
+
+          if (
+            recurso ===
+            'notificaciones'
+          ) {
+            const permiso =
+              await consultarNotificaciones();
+
+            procesar(
+              permiso.granted,
+              permiso.status,
+              permiso.canAskAgain
+            );
+          }
+        } catch (error) {
+          console.error(
+            `Error consultando permiso de ${recurso}:`,
+            error
           );
 
-          return;
+          setEstado(
+            'bloqueado'
+          );
         }
-
-        // Notificaciones:
-        // las completaremos al hacer la development build.
-        setEstado('preguntable');
-      } catch (error) {
-        console.error(
-          `Error consultando permiso de ${recurso}:`,
-          error
-        );
-
-        setEstado('bloqueado');
-      }
-    }, [
-      recurso,
-      consultarCamara,
-      procesar,
-    ]);
+      },
+      [
+        recurso,
+        consultarCamara,
+        procesar,
+      ]
+    );
 
   const pedir =
-    useCallback(async () => {
-      try {
-        if (recurso === 'camara') {
-          const permiso =
-            await pedirCamara();
+    useCallback(
+      async () => {
+        try {
+          if (
+            recurso ===
+            'camara'
+          ) {
+            const permiso =
+              await pedirCamara();
 
-          procesar(
-            permiso.granted,
-            permiso.status,
-            permiso.canAskAgain
+            procesar(
+              permiso.granted,
+              permiso.status,
+              permiso.canAskAgain
+            );
+
+            return permiso.granted;
+          }
+
+          if (
+            recurso ===
+            'ubicacion'
+          ) {
+            const permiso =
+              await solicitarUbicacion();
+
+            procesar(
+              permiso.granted,
+              permiso.status,
+              permiso.canAskAgain,
+              permiso.parcial,
+              permiso.detalleParcial
+            );
+
+            return permiso.granted;
+          }
+
+          if (
+            recurso ===
+            'notificaciones'
+          ) {
+            const permiso =
+              await solicitarNotificaciones();
+
+            procesar(
+              permiso.granted,
+              permiso.status,
+              permiso.canAskAgain
+            );
+
+            return permiso.granted;
+          }
+
+          return false;
+        } catch (error) {
+          console.error(
+            `Error solicitando permiso de ${recurso}:`,
+            error
           );
 
-          return permiso.granted;
+          return false;
         }
-
-        if (recurso === 'ubicacion') {
-          const permiso =
-            await solicitarUbicacion();
-
-          procesar(
-            permiso.granted,
-            permiso.status,
-            permiso.canAskAgain,
-            permiso.parcial,
-            permiso.detalleParcial
-          );
-
-          return permiso.granted;
-        }
-
-        console.warn(
-          'Las notificaciones se probarán en la development build.'
-        );
-
-        return false;
-      } catch (error) {
-        console.error(
-          `Error solicitando permiso de ${recurso}:`,
-          error
-        );
-
-        return false;
-      }
-    }, [
-      recurso,
-      pedirCamara,
-      procesar,
-    ]);
+      },
+      [
+        recurso,
+        pedirCamara,
+        procesar,
+      ]
+    );
 
   const abrirAjustes =
-    useCallback(async () => {
-      await Linking.openSettings();
-    }, []);
+    useCallback(
+      async () => {
+        await Linking.openSettings();
+      },
+      []
+    );
 
   useEffect(() => {
     actualizar();
@@ -194,7 +275,9 @@ export function usePermiso(
     const suscripcion =
       AppState.addEventListener(
         'change',
-        (nuevoEstado) => {
+        (
+          nuevoEstado
+        ) => {
           const estabaAfuera =
             estadoAnterior.current ===
               'background' ||
@@ -203,7 +286,8 @@ export function usePermiso(
 
           if (
             estabaAfuera &&
-            nuevoEstado === 'active'
+            nuevoEstado ===
+              'active'
           ) {
             actualizar();
           }
@@ -222,6 +306,7 @@ export function usePermiso(
     estado,
     parcial,
     detalleParcial,
+
     pedir,
     abrirAjustes,
     actualizar,
