@@ -6,7 +6,9 @@ import {
   View,
 } from 'react-native';
 
-import { Link } from 'expo-router';
+import {
+  Link,
+} from 'expo-router';
 
 import {
   EstadoPermiso,
@@ -31,15 +33,123 @@ function textoEstado(
   }
 }
 
+function textoPlataforma() {
+  if (Platform.OS === 'android') {
+    return 'Android';
+  }
+
+  if (Platform.OS === 'ios') {
+    return 'iOS';
+  }
+
+  return Platform.OS;
+}
+
+function TarjetaPermiso({
+  nombre,
+  descripcion,
+  estado,
+  recurso,
+  detalle,
+}: {
+  nombre: string;
+  descripcion: string;
+  estado: EstadoPermiso;
+  recurso:
+    | 'camara'
+    | 'ubicacion'
+    | 'notificaciones';
+  detalle?: string | null;
+}) {
+  const concedido =
+    estado === 'concedido';
+
+  const bloqueado =
+    estado === 'bloqueado';
+
+  return (
+    <View style={styles.tarjeta}>
+      <View style={styles.encabezadoTarjeta}>
+        <Text style={styles.nombre}>
+          {nombre}
+        </Text>
+
+        <View
+          style={[
+            styles.estadoBadge,
+
+            concedido &&
+              styles.estadoConcedido,
+
+            bloqueado &&
+              styles.estadoBloqueado,
+          ]}
+        >
+          <Text
+            style={[
+              styles.estadoBadgeTexto,
+
+              concedido &&
+                styles.estadoConcedidoTexto,
+
+              bloqueado &&
+                styles.estadoBloqueadoTexto,
+            ]}
+          >
+            {textoEstado(
+              estado
+            )}
+          </Text>
+        </View>
+      </View>
+
+      <Text style={styles.descripcion}>
+        {descripcion}
+      </Text>
+
+      {detalle && (
+        <View style={styles.detalle}>
+          <Text
+            style={
+              styles.detalleTexto
+            }
+          >
+            {detalle}
+          </Text>
+        </View>
+      )}
+
+      <Link
+        href={{
+          pathname:
+            '/permisos/[recurso]',
+          params: {
+            recurso,
+          },
+        }}
+        style={styles.link}
+      >
+        Administrar permiso
+      </Link>
+    </View>
+  );
+}
+
 export default function PermisosScreen() {
   const camara =
-    usePermiso('camara');
+    usePermiso(
+      'camara'
+    );
 
   const ubicacion =
-    usePermiso('ubicacion');
+    usePermiso(
+      'ubicacion'
+    );
 
   const notificaciones =
-    usePermiso('notificaciones');
+    usePermiso(
+      'notificaciones'
+    );
 
   return (
     <ScrollView
@@ -51,69 +161,76 @@ export default function PermisosScreen() {
         Permisos
       </Text>
 
-      <Text style={styles.plataforma}>
-        Plataforma: {Platform.OS}
+      <Text
+        style={
+          styles.descripcionPrincipal
+        }
+      >
+        Consultá qué accesos tiene actualmente
+        Mantenimiento IPF y administralos de forma
+        individual.
       </Text>
 
-      <View style={styles.tarjeta}>
-        <Text style={styles.nombre}>
-          Cámara
-        </Text>
-
-        <Text style={styles.estado}>
-          {textoEstado(camara.estado)}
-        </Text>
-
-        <Link
-          href="/permisos/camara"
-          style={styles.link}
+      <View style={styles.plataforma}>
+        <Text
+          style={
+            styles.plataformaLabel
+          }
         >
-          Administrar permiso
-        </Link>
+          Plataforma
+        </Text>
+
+        <Text
+          style={
+            styles.plataformaValor
+          }
+        >
+          {textoPlataforma()}
+        </Text>
       </View>
 
-      <View style={styles.tarjeta}>
-        <Text style={styles.nombre}>
-          Ubicación
+      <TarjetaPermiso
+        nombre="Cámara"
+        descripcion="Se utiliza para leer el QR del aula y sacar fotografías del desperfecto."
+        estado={
+          camara.estado
+        }
+        recurso="camara"
+      />
+
+      <TarjetaPermiso
+        nombre="Ubicación"
+        descripcion="Se utiliza únicamente en primer plano para indicar dónde se encuentra el desperfecto."
+        estado={
+          ubicacion.estado
+        }
+        recurso="ubicacion"
+        detalle={
+          ubicacion.parcial
+            ? ubicacion.detalleParcial
+            : null
+        }
+      />
+
+      <TarjetaPermiso
+        nombre="Notificaciones"
+        descripcion="Se utilizan para avisarte cuando uno de tus reportes es marcado como resuelto."
+        estado={
+          notificaciones.estado
+        }
+        recurso="notificaciones"
+      />
+
+      <View style={styles.info}>
+        <Text style={styles.infoTitulo}>
+          Sobre los permisos
         </Text>
 
-        <Text style={styles.estado}>
-          {textoEstado(
-            ubicacion.estado
-          )}
+        <Text style={styles.infoTexto}>
+          Mantenimiento IPF solicita cada permiso
+          solamente cuando necesitás utilizar la
+          función correspondiente.
         </Text>
-
-        {ubicacion.parcial && (
-          <Text style={styles.parcial}>
-            {ubicacion.detalleParcial}
-          </Text>
-        )}
-
-        <Link
-          href="/permisos/ubicacion"
-          style={styles.link}
-        >
-          Administrar permiso
-        </Link>
-      </View>
-
-      <View style={styles.tarjeta}>
-        <Text style={styles.nombre}>
-          Notificaciones
-        </Text>
-
-        <Text style={styles.estado}>
-          {textoEstado(
-            notificaciones.estado
-          )}
-        </Text>
-
-        <Link
-          href="/permisos/notificaciones"
-          style={styles.link}
-        >
-          Administrar permiso
-        </Link>
       </View>
     </ScrollView>
   );
@@ -135,9 +252,30 @@ const styles =
       color: '#17313d',
     },
 
-    plataforma: {
+    descripcionPrincipal: {
       color: '#6b7b83',
-      marginBottom: 5,
+      lineHeight: 21,
+    },
+
+    plataforma: {
+      backgroundColor:
+        '#2f4652',
+      padding: 16,
+      borderRadius: 14,
+      flexDirection: 'row',
+      justifyContent:
+        'space-between',
+      alignItems: 'center',
+    },
+
+    plataformaLabel: {
+      color: '#dce4e8',
+      fontWeight: '600',
+    },
+
+    plataformaValor: {
+      color: '#ffffff',
+      fontWeight: '800',
     },
 
     tarjeta: {
@@ -145,27 +283,95 @@ const styles =
         '#ffffff',
       padding: 18,
       borderRadius: 16,
-      gap: 7,
+      gap: 10,
+    },
+
+    encabezadoTarjeta: {
+      flexDirection: 'row',
+      justifyContent:
+        'space-between',
+      alignItems: 'center',
+      gap: 10,
     },
 
     nombre: {
+      flex: 1,
       fontSize: 19,
       fontWeight: '800',
       color: '#17313d',
     },
 
-    estado: {
+    descripcion: {
       color: '#6b7b83',
+      lineHeight: 20,
     },
 
-    parcial: {
-      color: '#c27a00',
+    estadoBadge: {
+      backgroundColor:
+        '#fff3d6',
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      borderRadius: 20,
+    },
+
+    estadoBadgeTexto: {
+      color: '#a86600',
+      fontWeight: '700',
+      fontSize: 12,
+    },
+
+    estadoConcedido: {
+      backgroundColor:
+        '#dff2dc',
+    },
+
+    estadoConcedidoTexto: {
+      color: '#0f7d18',
+    },
+
+    estadoBloqueado: {
+      backgroundColor:
+        '#ffe1e1',
+    },
+
+    estadoBloqueadoTexto: {
+      color: '#c83d4d',
+    },
+
+    detalle: {
+      backgroundColor:
+        '#fff3d6',
+      padding: 10,
+      borderRadius: 10,
+    },
+
+    detalleTexto: {
+      color: '#a86600',
       fontWeight: '700',
     },
 
     link: {
-      marginTop: 7,
+      marginTop: 3,
       color: '#16a01d',
-      fontWeight: '700',
+      fontWeight: '800',
+    },
+
+    info: {
+      backgroundColor:
+        '#ffffff',
+      padding: 18,
+      borderRadius: 16,
+      marginTop: 5,
+    },
+
+    infoTitulo: {
+      fontWeight: '800',
+      color: '#17313d',
+      marginBottom: 6,
+    },
+
+    infoTexto: {
+      color: '#6b7b83',
+      lineHeight: 20,
     },
   });
