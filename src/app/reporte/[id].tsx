@@ -1,6 +1,9 @@
 import {
+  router,
   useLocalSearchParams,
 } from 'expo-router';
+
+import * as Notifications from 'expo-notifications';
 
 import {
   Image,
@@ -12,8 +15,17 @@ import {
 } from 'react-native';
 
 import {
+  useState,
+} from 'react';
+
+import {
   useReportes,
 } from '@/context/ReportesContext';
+
+import {
+  consultarNotificaciones,
+  prepararCanalReportes,
+} from '@/lib/permisos';
 
 export default function DetalleReporteScreen() {
   const {
@@ -26,13 +38,24 @@ export default function DetalleReporteScreen() {
   const {
     buscarReporte,
     resolverReporte,
-  } = useReportes();
+    agregarAviso,
+    notificacionesActivas,
+  } =
+    useReportes();
+
+  const [
+    resolviendo,
+    setResolviendo,
+  ] =
+    useState(false);
 
   const numeroId =
     Number(id);
 
   if (
-    Number.isNaN(numeroId)
+    Number.isNaN(
+      numeroId
+    )
   ) {
     return (
       <View style={styles.container}>
@@ -44,7 +67,9 @@ export default function DetalleReporteScreen() {
   }
 
   const reporte =
-    buscarReporte(numeroId);
+    buscarReporte(
+      numeroId
+    );
 
   if (!reporte) {
     return (
@@ -57,8 +82,97 @@ export default function DetalleReporteScreen() {
   }
 
   const tieneCoordenadas =
-    reporte.latitud !== undefined &&
-    reporte.longitud !== undefined;
+    reporte.latitud !==
+      undefined &&
+    reporte.longitud !==
+      undefined;
+
+  const reporteId =
+    reporte.id;
+
+  const reporteTitulo =
+    reporte.titulo;
+
+  const reporteAula =
+    reporte.aula;
+
+  async function simularResolucion() {
+    if (resolviendo) {
+      return;
+    }
+
+    try {
+      setResolviendo(
+        true
+      );
+
+      resolverReporte(
+        reporteId
+      );
+
+      agregarAviso(
+        'Reporte resuelto',
+        `El reporte "${reporteTitulo}" del aula ${reporteAula} fue marcado como resuelto.`
+      );
+
+      const permiso =
+        await consultarNotificaciones();
+
+      if (
+        notificacionesActivas &&
+        permiso.granted
+      ) {
+        await prepararCanalReportes();
+
+        await Notifications.scheduleNotificationAsync(
+          {
+            content: {
+              title:
+                'Reporte resuelto',
+
+              body:
+                `El reporte "${reporteTitulo}" fue resuelto.`,
+
+              data: {
+                reporteId,
+              },
+            },
+
+            trigger: {
+              type:
+                Notifications
+                  .SchedulableTriggerInputTypes
+                  .TIME_INTERVAL,
+
+              seconds: 10,
+
+              channelId:
+                'reportes',
+            },
+          }
+        );
+
+        return;
+      }
+
+      if (
+        !permiso.granted
+      ) {
+        router.push(
+          '/avisos'
+        );
+      }
+    } catch (error) {
+      console.error(
+        'Error al resolver el reporte:',
+        error
+      );
+    } finally {
+      setResolviendo(
+        false
+      );
+    }
+  }
 
   return (
     <ScrollView
@@ -107,6 +221,7 @@ export default function DetalleReporteScreen() {
         <Text
           style={[
             styles.estado,
+
             reporte.estado ===
               'resuelto' &&
               styles.estadoResuelto,
@@ -124,7 +239,8 @@ export default function DetalleReporteScreen() {
 
           <Image
             source={{
-              uri: reporte.foto,
+              uri:
+                reporte.foto,
             }}
             style={styles.imagen}
           />
@@ -154,12 +270,16 @@ export default function DetalleReporteScreen() {
           <>
             <Text style={styles.texto}>
               Latitud:{' '}
-              {reporte.latitud?.toFixed(6)}
+              {reporte.latitud?.toFixed(
+                6
+              )}
             </Text>
 
             <Text style={styles.texto}>
               Longitud:{' '}
-              {reporte.longitud?.toFixed(6)}
+              {reporte.longitud?.toFixed(
+                6
+              )}
             </Text>
           </>
         ) : (
@@ -173,10 +293,11 @@ export default function DetalleReporteScreen() {
         'resuelto' && (
         <Pressable
           style={styles.boton}
-          onPress={() =>
-            resolverReporte(
-              reporte.id
-            )
+          onPress={
+            simularResolucion
+          }
+          disabled={
+            resolviendo
           }
         >
           <Text
@@ -184,18 +305,16 @@ export default function DetalleReporteScreen() {
               styles.botonTexto
             }
           >
-            Simular resolución
+            {resolviendo
+              ? 'Resolviendo...'
+              : 'Simular resolución'}
           </Text>
         </Pressable>
       )}
 
       {reporte.estado ===
         'resuelto' && (
-        <View
-          style={
-            styles.resuelto
-          }
-        >
+        <View style={styles.resuelto}>
           <Text
             style={
               styles.resueltoTitulo

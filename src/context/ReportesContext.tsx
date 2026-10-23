@@ -24,6 +24,13 @@ type BorradorReporte = {
   sector?: string;
 };
 
+export type Aviso = {
+  id: number;
+  titulo: string;
+  mensaje: string;
+  fecha: Date;
+};
+
 type ReportesContextType = {
   reportes: Reporte[];
 
@@ -44,6 +51,19 @@ type ReportesContextType = {
   resolverReporte: (
     id: number
   ) => void;
+
+  avisos: Aviso[];
+
+  agregarAviso: (
+    titulo: string,
+    mensaje: string
+  ) => void;
+
+  notificacionesActivas: boolean;
+
+  setNotificacionesActivas: (
+    valor: boolean
+  ) => void;
 };
 
 const borradorInicial: BorradorReporte = {
@@ -63,21 +83,41 @@ export function ReportesProvider({
 }: {
   children: ReactNode;
 }) {
-  const [reportes, setReportes] =
+  const [
+    reportes,
+    setReportes,
+  ] =
     useState<Reporte[]>([]);
 
-  const [borrador, setBorrador] =
+  const [
+    borrador,
+    setBorrador,
+  ] =
     useState<BorradorReporte>(
       borradorInicial
     );
 
+  const [
+    avisos,
+    setAvisos,
+  ] =
+    useState<Aviso[]>([]);
+
+  const [
+    notificacionesActivas,
+    setNotificacionesActivas,
+  ] =
+    useState(false);
+
   function actualizarBorrador(
     datos: Partial<BorradorReporte>
   ) {
-    setBorrador((actual) => ({
-      ...actual,
-      ...datos,
-    }));
+    setBorrador(
+      (actual) => ({
+        ...actual,
+        ...datos,
+      })
+    );
   }
 
   function limpiarBorrador() {
@@ -90,16 +130,23 @@ export function ReportesProvider({
     const nuevoReporte: Reporte = {
       id: Date.now(),
 
-      titulo: borrador.titulo,
+      titulo:
+        borrador.titulo,
+
       descripcion:
         borrador.descripcion,
-      aula: borrador.aula,
+
+      aula:
+        borrador.aula,
+
       categoria:
         borrador.categoria,
 
-      estado: 'pendiente',
+      estado:
+        'pendiente',
 
-      foto: borrador.foto,
+      foto:
+        borrador.foto,
 
       latitud:
         borrador.latitud,
@@ -111,10 +158,12 @@ export function ReportesProvider({
         borrador.sector,
     };
 
-    setReportes((actuales) => [
-      ...actuales,
-      nuevoReporte,
-    ]);
+    setReportes(
+      (actuales) => [
+        ...actuales,
+        nuevoReporte,
+      ]
+    );
 
     limpiarBorrador();
 
@@ -133,17 +182,37 @@ export function ReportesProvider({
   function resolverReporte(
     id: number
   ) {
-    setReportes((actuales) =>
-      actuales.map(
-        (reporte) =>
-          reporte.id === id
-            ? {
-                ...reporte,
-                estado:
-                  'resuelto',
-              }
-            : reporte
-      )
+    setReportes(
+      (actuales) =>
+        actuales.map(
+          (reporte) =>
+            reporte.id === id
+              ? {
+                  ...reporte,
+                  estado:
+                    'resuelto',
+                }
+              : reporte
+        )
+    );
+  }
+
+  function agregarAviso(
+    titulo: string,
+    mensaje: string
+  ) {
+    const nuevoAviso: Aviso = {
+      id: Date.now(),
+      titulo,
+      mensaje,
+      fecha: new Date(),
+    };
+
+    setAvisos(
+      (actuales) => [
+        nuevoAviso,
+        ...actuales,
+      ]
     );
   }
 
@@ -159,6 +228,12 @@ export function ReportesProvider({
         crearReporte,
         buscarReporte,
         resolverReporte,
+
+        avisos,
+        agregarAviso,
+
+        notificacionesActivas,
+        setNotificacionesActivas,
       }}
     >
       {children}
