@@ -1,11 +1,7 @@
 import {
-  CameraView,
   BarcodeScanningResult,
+  CameraView,
 } from 'expo-camera';
-
-import {
-  useReportes,
-} from '@/context/ReportesContext';
 
 import {
   router,
@@ -28,16 +24,17 @@ import {
   usePermiso,
 } from '@/hooks/usePermiso';
 
-export default function EscanearScreen() {
+import {
+  useReportes,
+} from '@/context/ReportesContext';
 
+export default function EscanearScreen() {
   const {
-  actualizarBorrador,
-} = useReportes();
+    actualizarBorrador,
+  } = useReportes();
 
   const {
     estado,
-    pedir,
-    abrirAjustes,
   } = usePermiso('camara');
 
   const [
@@ -63,40 +60,40 @@ export default function EscanearScreen() {
     }
 
     setEscaneado(true);
-
     setCodigoDetectado(
       resultado.data
     );
   }
 
-function usarCodigo() {
-  if (
-    codigoDetectado.trim() === ''
-  ) {
-    return;
+  function usarCodigo() {
+    if (
+      codigoDetectado.trim() === ''
+    ) {
+      return;
+    }
+
+    actualizarBorrador({
+      aula:
+        codigoDetectado.trim(),
+    });
+
+    router.back();
   }
 
-  actualizarBorrador({
-    aula:
-      codigoDetectado.trim(),
-  });
+  function usarManual() {
+    if (
+      aulaManual.trim() === ''
+    ) {
+      return;
+    }
 
-  router.back();
-}
+    actualizarBorrador({
+      aula:
+        aulaManual.trim(),
+    });
 
-function usarManual() {
-  if (
-    aulaManual.trim() === ''
-  ) {
-    return;
+    router.back();
   }
-
-  actualizarBorrador({
-    aula: aulaManual.trim(),
-  });
-
-  router.back();
-}
 
   if (estado === 'cargando') {
     return (
@@ -113,7 +110,10 @@ function usarManual() {
     );
   }
 
-  if (estado === 'preguntable') {
+  if (
+    estado === 'preguntable' ||
+    estado === 'bloqueado'
+  ) {
     return (
       <View style={styles.container}>
         <Text style={styles.titulo}>
@@ -121,48 +121,20 @@ function usarManual() {
         </Text>
 
         <Text style={styles.texto}>
-          Usamos tu cámara para leer el
-          código QR pegado en la puerta
-          del aula.
+          Para escanear el código del aula necesitás
+          habilitar el acceso a la cámara.
         </Text>
 
         <Pressable
           style={styles.boton}
-          onPress={pedir}
+          onPress={() =>
+            router.push(
+              '/permisos/camara'
+            )
+          }
         >
           <Text style={styles.botonTexto}>
-            Continuar
-          </Text>
-        </Pressable>
-
-        <CargaManual
-          valor={aulaManual}
-          onChange={setAulaManual}
-          onUsar={usarManual}
-        />
-      </View>
-    );
-  }
-
-  if (estado === 'bloqueado') {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.titulo}>
-          Cámara bloqueada
-        </Text>
-
-        <Text style={styles.texto}>
-          El permiso de cámara está
-          bloqueado. Podés habilitarlo
-          desde los Ajustes del teléfono.
-        </Text>
-
-        <Pressable
-          style={styles.boton}
-          onPress={abrirAjustes}
-        >
-          <Text style={styles.botonTexto}>
-            Abrir Ajustes
+            Configurar cámara
           </Text>
         </Pressable>
 
@@ -248,7 +220,9 @@ function CargaManual({
   onUsar,
 }: {
   valor: string;
-  onChange: (texto: string) => void;
+  onChange: (
+    texto: string
+  ) => void;
   onUsar: () => void;
 }) {
   return (
@@ -258,7 +232,7 @@ function CargaManual({
       </Text>
 
       <Text style={styles.texto}>
-        Si no podés usar la cámara,
+        Si no querés usar la cámara,
         escribí el código del aula.
       </Text>
 
@@ -300,9 +274,9 @@ const styles =
       alignItems: 'center',
       justifyContent: 'center',
       gap: 15,
+      padding: 20,
       backgroundColor:
         '#f7f0dc',
-      padding: 20,
     },
 
     titulo: {

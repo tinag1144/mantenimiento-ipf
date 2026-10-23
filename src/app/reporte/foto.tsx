@@ -1,6 +1,6 @@
 import {
-  CameraView,
   CameraType,
+  CameraView,
 } from 'expo-camera';
 
 import {
@@ -38,8 +38,6 @@ export default function FotoScreen() {
 
   const {
     estado,
-    pedir,
-    abrirAjustes,
   } = usePermiso('camara');
 
   const cameraRef =
@@ -69,28 +67,16 @@ export default function FotoScreen() {
     }
   }
 
-  async function abrirCamara() {
+  function abrirCamara() {
     if (estado === 'concedido') {
       setModoCamara(true);
       return;
     }
 
-    if (estado === 'preguntable') {
-      const concedido =
-        await pedir();
-
-      if (concedido) {
-        setModoCamara(true);
-      }
-
-      return;
-    }
-
-    if (estado === 'bloqueado') {
-      await abrirAjustes();
-    }
+    router.push(
+      '/permisos/camara'
+    );
   }
-
   async function sacarFoto() {
     if (!cameraRef.current) {
       return;

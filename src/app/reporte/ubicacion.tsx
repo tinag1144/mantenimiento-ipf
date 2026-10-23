@@ -61,50 +61,44 @@ export default function UbicacionScreen() {
     setSector,
   ] = useState<string | null>(null);
 
-  async function obtenerUbicacion() {
-    if (estado === 'preguntable') {
-      const concedido =
-        await pedir();
+async function obtenerUbicacion() {
+  if (
+    estado !== 'concedido'
+  ) {
+    router.push(
+      '/permisos/ubicacion'
+    );
 
-      if (!concedido) {
-        return;
-      }
-    }
+    return;
+  }
 
-    if (
-      estado !== 'concedido' &&
-      estado !== 'preguntable'
-    ) {
-      return;
-    }
+  try {
+    setBuscando(true);
 
-    try {
-      setBuscando(true);
-
-      const posicion =
-        await Location.getCurrentPositionAsync({
-          accuracy:
-            Location.Accuracy.Balanced,
-        });
-
-      setCoordenadas({
-        latitud:
-          posicion.coords.latitude,
-
-        longitud:
-          posicion.coords.longitude,
+    const posicion =
+      await Location.getCurrentPositionAsync({
+        accuracy:
+          Location.Accuracy.Balanced,
       });
 
-      setSector(null);
-    } catch (error) {
-      console.error(
-        'Error obteniendo ubicación:',
-        error
-      );
-    } finally {
-      setBuscando(false);
-    }
+    setCoordenadas({
+      latitud:
+        posicion.coords.latitude,
+
+      longitud:
+        posicion.coords.longitude,
+    });
+
+    setSector(null);
+  } catch (error) {
+    console.error(
+      'Error obteniendo ubicación:',
+      error
+    );
+  } finally {
+    setBuscando(false);
   }
+}
 
   function usarUbicacion() {
     if (!coordenadas) {
@@ -184,48 +178,43 @@ export default function UbicacionScreen() {
         </Pressable>
       )}
 
-      {estado === 'preguntable' && (
-        <>
-          <Text style={styles.aviso}>
-            Para usar tu ubicación necesitamos
-            tu permiso.
-          </Text>
+  {estado === 'preguntable' && (
+    <Pressable
+      style={styles.botonPrincipal}
+      onPress={() =>
+        router.push(
+          '/permisos/ubicacion'
+        )
+      }
+    >
+      <Text
+        style={
+          styles.botonPrincipalTexto
+        }
+      >
+        Usar mi ubicación actual
+      </Text>
+    </Pressable>
+  )}
 
-          <Pressable
-            style={styles.botonPrincipal}
-            onPress={obtenerUbicacion}
-          >
-            <Text
-              style={
-                styles.botonPrincipalTexto
-              }
-            >
-              Continuar
-            </Text>
-          </Pressable>
-        </>
-      )}
-
-      {estado === 'bloqueado' && (
-        <>
-          <Text style={styles.error}>
-            El permiso de ubicación está bloqueado.
-          </Text>
-
-          <Pressable
-            style={styles.botonAjustes}
-            onPress={abrirAjustes}
-          >
-            <Text
-              style={
-                styles.botonAjustesTexto
-              }
-            >
-              Abrir Ajustes
-            </Text>
-          </Pressable>
-        </>
-      )}
+{estado === 'bloqueado' && (
+  <Pressable
+    style={styles.botonAjustes}
+    onPress={() =>
+      router.push(
+        '/permisos/ubicacion'
+      )
+    }
+  >
+    <Text
+      style={
+        styles.botonAjustesTexto
+      }
+    >
+      Administrar ubicación
+    </Text>
+  </Pressable>
+)}
 
       {coordenadas && (
         <>
