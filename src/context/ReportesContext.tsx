@@ -10,19 +10,32 @@ import {
   Reporte,
 } from '@/types/Reporte';
 
-type NuevoReporte = {
+type BorradorReporte = {
   titulo: string;
   descripcion: string;
   aula: string;
   categoria: CategoriaReporte;
+
+  foto?: string;
+
+  latitud?: number;
+  longitud?: number;
+
+  sector?: string;
 };
 
 type ReportesContextType = {
   reportes: Reporte[];
 
-  crearReporte: (
-    datos: NuevoReporte
-  ) => Reporte;
+  borrador: BorradorReporte;
+
+  actualizarBorrador: (
+    datos: Partial<BorradorReporte>
+  ) => void;
+
+  limpiarBorrador: () => void;
+
+  crearReporte: () => Reporte;
 
   buscarReporte: (
     id: number
@@ -31,6 +44,13 @@ type ReportesContextType = {
   resolverReporte: (
     id: number
   ) => void;
+};
+
+const borradorInicial: BorradorReporte = {
+  titulo: '',
+  descripcion: '',
+  aula: '',
+  categoria: 'electricidad',
 };
 
 const ReportesContext =
@@ -46,24 +66,57 @@ export function ReportesProvider({
   const [reportes, setReportes] =
     useState<Reporte[]>([]);
 
-  function crearReporte(
-    datos: NuevoReporte
-  ): Reporte {
+  const [borrador, setBorrador] =
+    useState<BorradorReporte>(
+      borradorInicial
+    );
+
+  function actualizarBorrador(
+    datos: Partial<BorradorReporte>
+  ) {
+    setBorrador((actual) => ({
+      ...actual,
+      ...datos,
+    }));
+  }
+
+  function limpiarBorrador() {
+    setBorrador(
+      borradorInicial
+    );
+  }
+
+  function crearReporte(): Reporte {
     const nuevoReporte: Reporte = {
       id: Date.now(),
 
-      titulo: datos.titulo,
-      descripcion: datos.descripcion,
-      aula: datos.aula,
-      categoria: datos.categoria,
+      titulo: borrador.titulo,
+      descripcion:
+        borrador.descripcion,
+      aula: borrador.aula,
+      categoria:
+        borrador.categoria,
 
       estado: 'pendiente',
+
+      foto: borrador.foto,
+
+      latitud:
+        borrador.latitud,
+
+      longitud:
+        borrador.longitud,
+
+      sector:
+        borrador.sector,
     };
 
     setReportes((actuales) => [
       ...actuales,
       nuevoReporte,
     ]);
+
+    limpiarBorrador();
 
     return nuevoReporte;
   }
@@ -72,7 +125,8 @@ export function ReportesProvider({
     id: number
   ) {
     return reportes.find(
-      (reporte) => reporte.id === id
+      (reporte) =>
+        reporte.id === id
     );
   }
 
@@ -80,13 +134,15 @@ export function ReportesProvider({
     id: number
   ) {
     setReportes((actuales) =>
-      actuales.map((reporte) =>
-        reporte.id === id
-          ? {
-              ...reporte,
-              estado: 'resuelto',
-            }
-          : reporte
+      actuales.map(
+        (reporte) =>
+          reporte.id === id
+            ? {
+                ...reporte,
+                estado:
+                  'resuelto',
+              }
+            : reporte
       )
     );
   }
@@ -95,6 +151,11 @@ export function ReportesProvider({
     <ReportesContext.Provider
       value={{
         reportes,
+
+        borrador,
+        actualizarBorrador,
+        limpiarBorrador,
+
         crearReporte,
         buscarReporte,
         resolverReporte,
@@ -107,7 +168,9 @@ export function ReportesProvider({
 
 export function useReportes() {
   const contexto =
-    useContext(ReportesContext);
+    useContext(
+      ReportesContext
+    );
 
   if (!contexto) {
     throw new Error(

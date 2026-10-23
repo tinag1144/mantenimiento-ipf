@@ -1,6 +1,10 @@
 import * as Location from 'expo-location';
 
 import {
+  router,
+} from 'expo-router';
+
+import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
@@ -16,6 +20,10 @@ import {
   usePermiso,
 } from '@/hooks/usePermiso';
 
+import {
+  useReportes,
+} from '@/context/ReportesContext';
+
 const sectores = [
   'Patio',
   'Estacionamiento',
@@ -30,6 +38,10 @@ export default function UbicacionScreen() {
     pedir,
     abrirAjustes,
   } = usePermiso('ubicacion');
+
+  const {
+    actualizarBorrador,
+  } = useReportes();
 
   const [
     buscando,
@@ -59,7 +71,10 @@ export default function UbicacionScreen() {
       }
     }
 
-    if (estado !== 'concedido') {
+    if (
+      estado !== 'concedido' &&
+      estado !== 'preguntable'
+    ) {
       return;
     }
 
@@ -89,6 +104,39 @@ export default function UbicacionScreen() {
     } finally {
       setBuscando(false);
     }
+  }
+
+  function usarUbicacion() {
+    if (!coordenadas) {
+      return;
+    }
+
+    actualizarBorrador({
+      latitud:
+        coordenadas.latitud,
+
+      longitud:
+        coordenadas.longitud,
+
+      sector: undefined,
+    });
+
+    router.back();
+  }
+
+  function usarSector() {
+    if (!sector) {
+      return;
+    }
+
+    actualizarBorrador({
+      sector,
+
+      latitud: undefined,
+      longitud: undefined,
+    });
+
+    router.back();
   }
 
   if (estado === 'cargando') {
@@ -168,7 +216,11 @@ export default function UbicacionScreen() {
             style={styles.botonAjustes}
             onPress={abrirAjustes}
           >
-            <Text style={styles.botonAjustesTexto}>
+            <Text
+              style={
+                styles.botonAjustesTexto
+              }
+            >
               Abrir Ajustes
             </Text>
           </Pressable>
@@ -176,38 +228,73 @@ export default function UbicacionScreen() {
       )}
 
       {coordenadas && (
-        <View style={styles.resultado}>
-          {parcial ? (
-            <>
-              <Text style={styles.resultadoTitulo}>
-                {detalleParcial ??
-                  'Ubicación aproximada'}
-              </Text>
+        <>
+          <View style={styles.resultado}>
+            {parcial ? (
+              <>
+                <Text
+                  style={
+                    styles.resultadoTitulo
+                  }
+                >
+                  {detalleParcial ??
+                    'Ubicación aproximada'}
+                </Text>
 
-              <Text style={styles.resultadoTexto}>
-                No mostramos coordenadas exactas
-                porque el dispositivo concedió
-                ubicación aproximada.
-              </Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.resultadoTitulo}>
-                Ubicación obtenida
-              </Text>
+                <Text
+                  style={
+                    styles.resultadoTexto
+                  }
+                >
+                  No mostramos coordenadas exactas
+                  porque el dispositivo concedió
+                  ubicación aproximada.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text
+                  style={
+                    styles.resultadoTitulo
+                  }
+                >
+                  Ubicación obtenida
+                </Text>
 
-              <Text style={styles.resultadoTexto}>
-                Latitud:{' '}
-                {coordenadas.latitud.toFixed(6)}
-              </Text>
+                <Text
+                  style={
+                    styles.resultadoTexto
+                  }
+                >
+                  Latitud:{' '}
+                  {coordenadas.latitud.toFixed(6)}
+                </Text>
 
-              <Text style={styles.resultadoTexto}>
-                Longitud:{' '}
-                {coordenadas.longitud.toFixed(6)}
-              </Text>
-            </>
-          )}
-        </View>
+                <Text
+                  style={
+                    styles.resultadoTexto
+                  }
+                >
+                  Longitud:{' '}
+                  {coordenadas.longitud.toFixed(6)}
+                </Text>
+              </>
+            )}
+          </View>
+
+          <Pressable
+            style={styles.botonPrincipal}
+            onPress={usarUbicacion}
+          >
+            <Text
+              style={
+                styles.botonPrincipalTexto
+              }
+            >
+              Usar esta ubicación
+            </Text>
+          </Pressable>
+        </>
       )}
 
       <View style={styles.separador} />
@@ -230,6 +317,7 @@ export default function UbicacionScreen() {
             key={opcion}
             style={[
               styles.sector,
+
               seleccionado &&
                 styles.sectorSeleccionado,
             ]}
@@ -241,6 +329,7 @@ export default function UbicacionScreen() {
             <Text
               style={[
                 styles.sectorTexto,
+
                 seleccionado &&
                   styles.sectorTextoSeleccionado,
               ]}
@@ -252,15 +341,38 @@ export default function UbicacionScreen() {
       })}
 
       {sector && (
-        <View style={styles.resultado}>
-          <Text style={styles.resultadoTitulo}>
-            Sector seleccionado
-          </Text>
+        <>
+          <View style={styles.resultado}>
+            <Text
+              style={
+                styles.resultadoTitulo
+              }
+            >
+              Sector seleccionado
+            </Text>
 
-          <Text style={styles.resultadoTexto}>
-            {sector}
-          </Text>
-        </View>
+            <Text
+              style={
+                styles.resultadoTexto
+              }
+            >
+              {sector}
+            </Text>
+          </View>
+
+          <Pressable
+            style={styles.botonPrincipal}
+            onPress={usarSector}
+          >
+            <Text
+              style={
+                styles.botonPrincipalTexto
+              }
+            >
+              Usar este sector
+            </Text>
+          </Pressable>
+        </>
       )}
     </View>
   );

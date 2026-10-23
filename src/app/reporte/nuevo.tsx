@@ -1,4 +1,6 @@
-import { router } from 'expo-router';
+import {
+  router,
+} from 'expo-router';
 
 import {
   Pressable,
@@ -30,27 +32,10 @@ const categorias: CategoriaReporte[] = [
 
 export default function NuevoReporteScreen() {
   const {
+    borrador,
+    actualizarBorrador,
     crearReporte,
   } = useReportes();
-
-  const [titulo, setTitulo] =
-    useState('');
-
-  const [
-    descripcion,
-    setDescripcion,
-  ] = useState('');
-
-  const [aula, setAula] =
-    useState('');
-
-  const [
-    categoria,
-    setCategoria,
-  ] =
-    useState<CategoriaReporte>(
-      'electricidad'
-    );
 
   const [
     error,
@@ -59,9 +44,9 @@ export default function NuevoReporteScreen() {
 
   function guardar() {
     if (
-      titulo.trim() === '' ||
-      descripcion.trim() === '' ||
-      aula.trim() === ''
+      borrador.titulo.trim() === '' ||
+      borrador.descripcion.trim() === '' ||
+      borrador.aula.trim() === ''
     ) {
       setError(
         'Completá título, descripción y aula.'
@@ -71,16 +56,12 @@ export default function NuevoReporteScreen() {
     }
 
     const reporte =
-      crearReporte({
-        titulo: titulo.trim(),
-        descripcion:
-          descripcion.trim(),
-        aula: aula.trim(),
-        categoria,
-      });
+      crearReporte();
 
     router.replace({
-      pathname: '/reporte/[id]',
+      pathname:
+        '/reporte/[id]',
+
       params: {
         id: reporte.id.toString(),
       },
@@ -99,17 +80,26 @@ export default function NuevoReporteScreen() {
 
       <TextInput
         placeholder="Título"
-        value={titulo}
-        onChangeText={setTitulo}
+        value={borrador.titulo}
+        onChangeText={(texto) =>
+          actualizarBorrador({
+            titulo: texto,
+          })
+        }
         style={styles.input}
       />
 
       <TextInput
         placeholder="Descripción"
         multiline
-        value={descripcion}
-        onChangeText={
-          setDescripcion
+        value={
+          borrador.descripcion
+        }
+        onChangeText={(texto) =>
+          actualizarBorrador({
+            descripcion:
+              texto,
+          })
         }
         style={[
           styles.input,
@@ -119,8 +109,12 @@ export default function NuevoReporteScreen() {
 
       <TextInput
         placeholder="Aula"
-        value={aula}
-        onChangeText={setAula}
+        value={borrador.aula}
+        onChangeText={(texto) =>
+          actualizarBorrador({
+            aula: texto,
+          })
+        }
         style={styles.input}
       />
 
@@ -128,19 +122,25 @@ export default function NuevoReporteScreen() {
         Categoría
       </Text>
 
-      <View style={styles.categorias}>
+      <View
+        style={
+          styles.categorias
+        }
+      >
         {categorias.map(
           (opcion) => {
             const seleccionada =
-              categoria === opcion;
+              borrador.categoria ===
+              opcion;
 
             return (
               <Pressable
                 key={opcion}
                 onPress={() =>
-                  setCategoria(
-                    opcion
-                  )
+                  actualizarBorrador({
+                    categoria:
+                      opcion,
+                  })
                 }
                 style={[
                   styles.categoria,
@@ -170,7 +170,9 @@ export default function NuevoReporteScreen() {
       </Text>
 
       <Pressable
-        style={styles.botonSecundario}
+        style={
+          styles.botonSecundario
+        }
         onPress={() =>
           router.push(
             '/reporte/escanear'
@@ -186,8 +188,16 @@ export default function NuevoReporteScreen() {
         </Text>
       </Pressable>
 
+      {borrador.aula !== '' && (
+        <Text style={styles.ok}>
+          Aula: {borrador.aula}
+        </Text>
+      )}
+
       <Pressable
-        style={styles.botonSecundario}
+        style={
+          styles.botonSecundario
+        }
         onPress={() =>
           router.push(
             '/reporte/foto'
@@ -203,8 +213,16 @@ export default function NuevoReporteScreen() {
         </Text>
       </Pressable>
 
+      {borrador.foto && (
+        <Text style={styles.ok}>
+          ✓ Foto adjuntada
+        </Text>
+      )}
+
       <Pressable
-        style={styles.botonSecundario}
+        style={
+          styles.botonSecundario
+        }
         onPress={() =>
           router.push(
             '/reporte/ubicacion'
@@ -220,6 +238,14 @@ export default function NuevoReporteScreen() {
         </Text>
       </Pressable>
 
+      {(borrador.sector ||
+        borrador.latitud !==
+          undefined) && (
+        <Text style={styles.ok}>
+          ✓ Ubicación cargada
+        </Text>
+      )}
+
       {error !== '' && (
         <Text style={styles.error}>
           {error}
@@ -227,11 +253,15 @@ export default function NuevoReporteScreen() {
       )}
 
       <Pressable
-        style={styles.botonGuardar}
+        style={
+          styles.botonGuardar
+        }
         onPress={guardar}
       >
         <Text
-          style={styles.botonGuardarTexto}
+          style={
+            styles.botonGuardarTexto
+          }
         >
           Crear reporte
         </Text>
@@ -307,11 +337,10 @@ const styles =
         'capitalize',
     },
 
-    categoriaTextoSeleccionada:
-      {
-        color: '#ffffff',
-        fontWeight: '700',
-      },
+    categoriaTextoSeleccionada: {
+      color: '#ffffff',
+      fontWeight: '700',
+    },
 
     botonSecundario: {
       backgroundColor:
@@ -339,6 +368,11 @@ const styles =
       color: '#ffffff',
       fontWeight: '800',
       fontSize: 16,
+    },
+
+    ok: {
+      color: '#0f7d18',
+      fontWeight: '700',
     },
 
     error: {

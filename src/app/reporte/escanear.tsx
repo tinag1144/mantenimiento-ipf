@@ -4,6 +4,10 @@ import {
 } from 'expo-camera';
 
 import {
+  useReportes,
+} from '@/context/ReportesContext';
+
+import {
   router,
 } from 'expo-router';
 
@@ -25,6 +29,11 @@ import {
 } from '@/hooks/usePermiso';
 
 export default function EscanearScreen() {
+
+  const {
+  actualizarBorrador,
+} = useReportes();
+
   const {
     estado,
     pedir,
@@ -60,25 +69,34 @@ export default function EscanearScreen() {
     );
   }
 
-  function usarCodigo() {
-    if (
-      codigoDetectado.trim() === ''
-    ) {
-      return;
-    }
-
-    router.back();
+function usarCodigo() {
+  if (
+    codigoDetectado.trim() === ''
+  ) {
+    return;
   }
 
-  function usarManual() {
-    if (
-      aulaManual.trim() === ''
-    ) {
-      return;
-    }
+  actualizarBorrador({
+    aula:
+      codigoDetectado.trim(),
+  });
 
-    router.back();
+  router.back();
+}
+
+function usarManual() {
+  if (
+    aulaManual.trim() === ''
+  ) {
+    return;
   }
+
+  actualizarBorrador({
+    aula: aulaManual.trim(),
+  });
+
+  router.back();
+}
 
   if (estado === 'cargando') {
     return (

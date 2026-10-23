@@ -3,6 +3,14 @@ import {
   CameraType,
 } from 'expo-camera';
 
+import {
+  router,
+} from 'expo-router';
+
+import {
+  useReportes,
+} from '@/context/ReportesContext';
+
 import * as ImagePicker from 'expo-image-picker';
 
 import {
@@ -23,6 +31,11 @@ import {
 } from '@/hooks/usePermiso';
 
 export default function FotoScreen() {
+
+  const {
+  actualizarBorrador,
+} = useReportes();
+
   const {
     estado,
     pedir,
@@ -155,6 +168,25 @@ export default function FotoScreen() {
           <Text style={styles.ok}>
             Imagen seleccionada
           </Text>
+
+          <Pressable
+  style={styles.botonPrincipal}
+  onPress={() => {
+    actualizarBorrador({
+      foto,
+    });
+
+    router.back();
+  }}
+>
+  <Text
+    style={
+      styles.botonPrincipalTexto
+    }
+  >
+    Usar esta foto
+  </Text>
+</Pressable>
         </View>
       ) : (
         <View style={styles.sinFoto}>

@@ -3,7 +3,9 @@ import {
 } from 'expo-router';
 
 import {
+  Image,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -35,8 +37,7 @@ export default function DetalleReporteScreen() {
     return (
       <View style={styles.container}>
         <Text style={styles.error}>
-          El identificador del reporte
-          no es válido.
+          El identificador del reporte no es válido.
         </Text>
       </View>
     );
@@ -55,8 +56,16 @@ export default function DetalleReporteScreen() {
     );
   }
 
+  const tieneCoordenadas =
+    reporte.latitud !== undefined &&
+    reporte.longitud !== undefined;
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      contentContainerStyle={
+        styles.container
+      }
+    >
       <Text style={styles.titulo}>
         {reporte.titulo}
       </Text>
@@ -95,17 +104,75 @@ export default function DetalleReporteScreen() {
           Estado
         </Text>
 
-        <Text style={styles.estado}>
+        <Text
+          style={[
+            styles.estado,
+            reporte.estado ===
+              'resuelto' &&
+              styles.estadoResuelto,
+          ]}
+        >
           {reporte.estado}
         </Text>
+      </View>
+
+      {reporte.foto && (
+        <View style={styles.tarjeta}>
+          <Text style={styles.label}>
+            Foto
+          </Text>
+
+          <Image
+            source={{
+              uri: reporte.foto,
+            }}
+            style={styles.imagen}
+          />
+        </View>
+      )}
+
+      <View style={styles.tarjeta}>
+        <Text style={styles.label}>
+          Ubicación
+        </Text>
+
+        {reporte.sector ? (
+          <>
+            <Text style={styles.texto}>
+              Sector:
+            </Text>
+
+            <Text
+              style={
+                styles.ubicacionDestacada
+              }
+            >
+              {reporte.sector}
+            </Text>
+          </>
+        ) : tieneCoordenadas ? (
+          <>
+            <Text style={styles.texto}>
+              Latitud:{' '}
+              {reporte.latitud?.toFixed(6)}
+            </Text>
+
+            <Text style={styles.texto}>
+              Longitud:{' '}
+              {reporte.longitud?.toFixed(6)}
+            </Text>
+          </>
+        ) : (
+          <Text style={styles.texto}>
+            No se agregó ubicación.
+          </Text>
+        )}
       </View>
 
       {reporte.estado !==
         'resuelto' && (
         <Pressable
-          style={
-            styles.boton
-          }
+          style={styles.boton}
           onPress={() =>
             resolverReporte(
               reporte.id
@@ -121,14 +188,39 @@ export default function DetalleReporteScreen() {
           </Text>
         </Pressable>
       )}
-    </View>
+
+      {reporte.estado ===
+        'resuelto' && (
+        <View
+          style={
+            styles.resuelto
+          }
+        >
+          <Text
+            style={
+              styles.resueltoTitulo
+            }
+          >
+            Reporte resuelto
+          </Text>
+
+          <Text
+            style={
+              styles.resueltoTexto
+            }
+          >
+            El desperfecto fue marcado como resuelto.
+          </Text>
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
 const styles =
   StyleSheet.create({
     container: {
-      flex: 1,
+      flexGrow: 1,
       padding: 20,
       gap: 15,
       backgroundColor:
@@ -146,29 +238,49 @@ const styles =
         '#ffffff',
       borderRadius: 16,
       padding: 18,
-      gap: 5,
+      gap: 7,
     },
 
     label: {
-      marginTop: 9,
+      marginTop: 5,
       fontWeight: '800',
       color: '#17313d',
     },
 
     texto: {
       color: '#6b7b83',
+      lineHeight: 21,
     },
 
     estado: {
-      color: '#16a01d',
+      color: '#c27a00',
       fontWeight: '800',
       textTransform:
         'capitalize',
     },
 
+    estadoResuelto: {
+      color: '#16a01d',
+    },
+
     capitalize: {
       textTransform:
         'capitalize',
+    },
+
+    imagen: {
+      width: '100%',
+      height: 280,
+      borderRadius: 14,
+      marginTop: 8,
+      backgroundColor:
+        '#e3dccb',
+    },
+
+    ubicacionDestacada: {
+      color: '#17313d',
+      fontSize: 18,
+      fontWeight: '800',
     },
 
     boton: {
@@ -182,6 +294,25 @@ const styles =
     botonTexto: {
       color: '#ffffff',
       fontWeight: '800',
+      fontSize: 16,
+    },
+
+    resuelto: {
+      backgroundColor:
+        '#dff2dc',
+      padding: 18,
+      borderRadius: 16,
+    },
+
+    resueltoTitulo: {
+      color: '#0f7d18',
+      fontSize: 18,
+      fontWeight: '800',
+    },
+
+    resueltoTexto: {
+      marginTop: 5,
+      color: '#0f7d18',
     },
 
     error: {
